@@ -30,6 +30,13 @@ export async function startDb(): Promise<Db> {
   server = await MongoMemoryServer.create();
   client = await MongoClient.connect(server.getUri());
   db = client.db("expo");
+
+  // Make rules 2 and 4 atomic: at most one QUEUED assignment per project and per judge.
+  await db.collection<Assignment>("assignments").createIndexes([
+    { key: { judgeId: 1 }, unique: true, partialFilterExpression: { status: "QUEUED" } },
+    { key: { projectId: 1 }, unique: true, partialFilterExpression: { status: "QUEUED" } },
+  ]);
+
   return db;
 }
 
